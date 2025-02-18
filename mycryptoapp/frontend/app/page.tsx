@@ -39,3 +39,4 @@ export default function HomePage() {
     </div>
   );
 }
+console.log("🔑 NEXT_PUBLIC_ETHERSCAN_API_KEY:", process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY);
