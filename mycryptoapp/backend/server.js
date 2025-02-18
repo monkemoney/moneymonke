@@ -13,7 +13,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: process.env.FRONTEND_URL, credentials: true } });
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT; // אין ברירת מחדל! Render קובע את הפורט
+
+if (!PORT) {
+  console.error("❌ שגיאה: אין PORT מוגדר! ודא ש-Render מספק את ה-PROCESS.ENV.PORT");
+  process.exit(1);
+}
+
 const CACHE_TTL = 600; // 10 דקות
 const ALERT_TTL = 86400; // 24 שעות
 const PRICE_UPDATE_INTERVAL = 30000; // 30 שניות
@@ -165,10 +171,10 @@ app.get('/api/contract/sol/:contractAddress', async (req, res) => {
 
 // ✅ בדיקת חיבור שרת
 app.get("/", (req, res) => {
-  res.send("✅ Server is running on api.moneymonke.io!");
+  res.send(`✅ Server is running on PORT ${PORT}`);
 });
 
 // ✅ הפעלת השרת
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on https://api.moneymonke.io (PORT ${PORT})`);
+  console.log(`🚀 Server running on PORT ${PORT}`);
 });
