@@ -147,28 +147,33 @@ app.get('/api/lunar/:symbol', async (req, res) => {
   data ? res.json(data) : res.status(500).json({ error: "API Request Failed" });
 });
 
-// ✅ Solscan API (תוקן – בדיקה אם מפתח בתוקף)
-app.get('/api/contract/sol/:contractAddress', async (req, res) => {
-  const { contractAddress } = req.params;
-  console.log(`📌 API Request: Solscan for ${contractAddress}`);
-  const url = `https://pro-api.solscan.io/v2.0/account/${contractAddress}`;
-
+// 📌 שליפת מחזיקים בטוקן של Solana דרך Blockdaemon
+app.get("/api/solana-holders", async (req, res) => {
   try {
-    const response = await axios.get(url, {
-      headers: { 'accept': 'application/json', 'token': process.env.SOLSCAN_API_KEY }
-    });
+    const { address } = req.query;
+    if (!address) return res.status(400).json({ error: "כתובת חסרה!" });
 
-    if (response.status !== 200) {
-      return res.status(500).json({ error: "Solscan API Request Failed - בדוק אם המפתח שלך בתוקף!" });
+    console.log("🆕 שליפת נתונים מ-Blockdaemon API...");
+    const url = `https://svc.blockdaemon.com/universal/v1/solana/account/${address}/balances`;
+    const headers = { "Authorization": `Bearer ${process.env.BLOCKDAEMON_API_KEY}` };
+
+    const response = await axios.get(url, { headers });
+
+    if (!response.data || !response.data.balances) {
+      return res.status(500).json({ error: "שגיאה בשליפת מחזיקים ב-Solana מ-Blockdaemon" });
     }
 
-    res.json({ contractAddress, data: response.data });
+    const result = {
+      total_holders: response.data.balances.length,
+      holders: response.data.balances.slice(0, 10) // 10 מחזיקים ראשונים
+    };
+
+    res.json(result);
   } catch (error) {
-    console.error(`❌ Solscan API Error: ${error.message}`);
-    res.status(500).json({ error: "Solscan API Request Failed" });
+    console.error("❌ שגיאה:", error.message);
+    res.status(500).json({ error: "שגיאה בשליפת מחזיקים ב-Solana" });
   }
 });
-
 // ✅ בדיקת חיבור שרת
 app.get("/", (req, res) => {
   res.send(`✅ Server is running on PORT ${PORT}`);
